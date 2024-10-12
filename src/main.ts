@@ -47,7 +47,7 @@ fetch(info)
         img: infoArr[0],
         position: new THREE.Vector3(
           Number(infoArr[1].split(",")[0]),
-          -1.6,
+          -Number(infoArr[1].split(",")[2]),
           -Number(infoArr[1].split(",")[1])
         ),
         quaternion: new THREE.Quaternion(
