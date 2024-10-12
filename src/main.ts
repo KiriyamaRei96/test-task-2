@@ -46,13 +46,13 @@ fetch(info)
       return {
         img: infoArr[0],
         position: new THREE.Vector3(
-          Number(infoArr[1].split(",")[0]),
+          -Number(infoArr[1].split(",")[0]),
           -1.6,
-          -Number(infoArr[1].split(",")[1])
+          Number(infoArr[1].split(",")[1])
         ),
         quaternion: new THREE.Quaternion(
-          Number(infoArr[2].split(",")[2]),
           Number(infoArr[2].split(",")[1]),
+          Number(infoArr[2].split(",")[2]),
           Number(infoArr[2].split(",")[3]),
           Number(infoArr[2].split(",")[0])
         ),
@@ -94,7 +94,12 @@ fetch(info)
     );
     camera.position.copy(pos);
     shpere.position.copy(pos);
-    const texture = textureLoader.load("../static/" + panoArr[0].img);
+    const texture = textureLoader.load(
+      window.location.origin +
+        window.location.pathname.replace("index.html", "") +
+        "static/" +
+        panoArr[0].img
+    );
     texture.colorSpace = THREE.SRGBColorSpace;
     shpere.material = new THREE.MeshBasicMaterial({
       side: THREE.FrontSide,
@@ -157,7 +162,12 @@ renderer.domElement.addEventListener("dblclick", () => {
     camera.position.copy(pos);
     shpere.position.copy(pos);
     orbit.target.copy(pos);
-    const texture = textureLoader.load("../static/" + hotspot.userData.img);
+    const texture = textureLoader.load(
+      window.location.origin +
+        window.location.pathname.replace("index.html", "") +
+        "static/" +
+        hotspot.userData.img
+    );
     texture.colorSpace = THREE.SRGBColorSpace;
     // @ts-ignore
     shpere.material.dispose();
