@@ -18,6 +18,7 @@ body {
    padding: 4px;
    border-radius: 4px;
    font-size: 12px;
+   pointer-events: none;
  }
  
  
