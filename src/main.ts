@@ -53,6 +53,7 @@ fetch(info)
         quaternion: new THREE.Quaternion(
           Number(infoArr[2].split(",")[2]),
           Number(infoArr[2].split(",")[1]),
+
           Number(infoArr[2].split(",")[3]),
           Number(infoArr[2].split(",")[0])
         ),
@@ -102,7 +103,7 @@ fetch(info)
     });
 
     let euler = new THREE.Euler();
-    euler.setFromQuaternion(panoArr[0].quaternion.invert(), "XYZ");
+    euler.setFromQuaternion(panoArr[0].quaternion.invert(), "YXZ");
 
     shpere.rotation.set(0, euler.y, 0);
 
@@ -167,7 +168,7 @@ renderer.domElement.addEventListener("dblclick", () => {
     });
 
     let euler = new THREE.Euler();
-    euler.setFromQuaternion(hotspot.userData.quaternion.invert(), "XYZ");
+    euler.setFromQuaternion(hotspot.userData.quaternion.invert(), "YXZ");
 
     shpere.rotation.set(0, euler.y, 0);
   }
