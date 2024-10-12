@@ -145,7 +145,7 @@ renderer.domElement.addEventListener("mousemove", (e) => {
   mousePosition.y = -(e.clientY / window.innerHeight) * 2 + 1;
 });
 let intersects: any[] = [];
-renderer.domElement.addEventListener("dblclick", (e) => {
+renderer.domElement.addEventListener("dblclick", (e: any) => {
   const hotspot = intersects.filter((int) => int.object.name === "hotspot")[0]
     ?.object;
   if (hotspot) {
