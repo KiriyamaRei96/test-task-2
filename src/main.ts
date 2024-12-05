@@ -5440,6 +5440,41 @@ const sampleData = [
 let initialRotation = undefined;
 // Debug
 const gui = new GUI();
+const debugObj = {
+	sphereRotation: 0,
+	cameraRotation: 0,
+
+	setNorth: () => {
+		const tour = sampleData.find(
+			(item) => item.id === sphere.name,
+		);
+		if (tour.rotation === undefined) {
+			if (initialRotation === undefined) {
+				initialRotation = orbit.getAzimuthalAngle()
+				tour.rotation = 0;
+				return
+			}
+
+			tour.rotation = initialRotation + -orbit.getAzimuthalAngle(),
+
+				sphere.rotation.y = initialRotation + -orbit.getAzimuthalAngle();
+		} else {
+			const newRotation =
+				hotspot.userData.rotation + initialRotation + -orbit.getAzimuthalAngle();
+
+			tour.rotation = newRotation
+
+			sphere.rotation.y = newRotation;
+		}
+		orbit.minAzimuthAngle =
+			initialRotation + (orbit.getAzimuthalAngle() - orbit.getAzimuthalAngle());
+		orbit.maxAzimuthAngle =
+			initialRotation + (orbit.getAzimuthalAngle() - orbit.getAzimuthalAngle());
+		orbit.update();
+		orbit.minAzimuthAngle = -Infinity;
+		orbit.maxAzimuthAngle = Infinity;
+	},
+};
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -5482,7 +5517,7 @@ function setupTour(tour: any, rotation) {
 	[...hotspotElArr].forEach(element => {
 		document.body.removeChild(element)
 	});
-
+	sphere.name = tour.id
 	textureLoader.load(tour.url, texture => {
 		texture.colorSpace = THREE.SRGBColorSpace
 		sphere.material.map = texture;
@@ -5524,7 +5559,7 @@ function setupTour(tour: any, rotation) {
 
 
 }
-setupTour(sampleData[0])
+setupTour(sampleData[0], 0)
 camera.fov = 75;
 scene.add(sphere)
 camera.updateProjectionMatrix();
