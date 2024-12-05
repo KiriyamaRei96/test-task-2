@@ -5468,44 +5468,60 @@ sphere.renderOrder = 1;
 sphere.material = new THREE.MeshBasicMaterial({ side: THREE.FrontSide });
 const textureLoader = new THREE.TextureLoader();
 
-function setupTour(tour: any) {
+function setupTour(tour: any, rotation) {
 	if (sphere.material.map)
-		sphere.material.map.displose()
+		sphere.material.map.dispose()
+	const childArr = []
+	sphere.traverse(child => {
+		child.geometry.dispose()
+		child.material.dispose()
+		childArr.push(child)
+	})
+	childArr.forEach(child => sphere.remove(child))
+	const hotspotElArr = document.getElementsByClassName('hotspot');
+	[...hotspotElArr].forEach(element => {
+		document.body.removeChild(element)
+	});
 
-	console.log(tour.url);
 	textureLoader.load(tour.url, texture => {
 		texture.colorSpace = THREE.SRGBColorSpace
 		sphere.material.map = texture;
 		sphere.material.needsUpdate = true;
+		sphere.rotation.y = rotation ?? 0
+		// sphere.rotation.y = -tour.rotationNorthPoint.h
+
+
+
+		tour.hotspots?.forEach(hotspot => {
+
+			const circle = new THREE.Mesh(
+				new THREE.CircleGeometry(20, 30),
+				new THREE.MeshBasicMaterial({
+					color: "#ffffff",
+					side: THREE.DoubleSide,
+					depthTest: false,
+				}),
+			);
+			circle.renderOrder = 2
+			circle.geometry.applyMatrix4(
+				new THREE.Matrix4().makeRotationX(0.5 * Math.PI),
+			);
+			const pos = new THREE.Vector3(-hotspot.coords.plane.x, hotspot.coords.plane.y, hotspot.coords.plane.z)
+
+			circle.position.copy(pos);
+			circle.name = hotspot.image.id;
+
+			const span = document.createElement('span')
+			span.className = 'hotspot'
+			span.innerText = hotspot.image.title
+			circle.userData = { el: span }
+			document.body.appendChild(span);
+			sphere.add(circle);
+
+		});
 
 	})
-	tour.hotspots.forEach(hotspot => {
 
-		const circle = new THREE.Mesh(
-			new THREE.CircleGeometry(30, 30),
-			new THREE.MeshBasicMaterial({
-				color: "#ffffff",
-				side: THREE.DoubleSide,
-				depthTest: false,
-			}),
-		);
-		circle.renderOrder = 2
-		circle.geometry.applyMatrix4(
-			new THREE.Matrix4().makeRotationX(0.5 * Math.PI),
-		);
-		const pos = new THREE.Vector3(-hotspot.coords.scene.x, hotspot.coords.scene.y, hotspot.coords.scene.z)
-		pos.multiplyScalar(0.1)
-		circle.position.copy(pos);
-		circle.name = hotspot.image.id;
-
-		const span = document.createElement('span')
-		span.className = 'hotspot'
-		span.innerText = "Master Bedroom Bathroom "
-		circle.userData = { el: span }
-
-		sphere.add(circle);
-
-	});
 
 }
 setupTour(sampleData[0])
@@ -5543,11 +5559,11 @@ renderer.domElement.addEventListener("mousemove", (e) => {
 });
 let intersects: any[] = [];
 renderer.domElement.addEventListener("dblclick", () => {
-	const hotspot = intersects.filter((int) => int.object.name === "hotspot")[0]
+	const hotspot = intersects[0]
 		?.object;
 	if (hotspot) {
-
-
+		const image = sampleData.find(item => item.id === hotspot.name)
+		if (image) setupTour(image)
 	}
 });
 
@@ -5556,12 +5572,12 @@ function animate() {
 	renderer.render(scene, camera);
 
 	rayCaster.setFromCamera(mousePosition, camera);
-	intersects = rayCaster.intersectObject(scene, true);
+	intersects = rayCaster.intersectObjects(sphere.children);
 	// update elelement
 	sphere.children.forEach((child: any, _) => {
 
 		const vector: any = child.position.clone();
-
+		sphere.localToWorld(vector)
 		camera.updateMatrix();
 		camera.updateMatrixWorld();
 		const cameraMatrixInverse = camera.matrixWorld.clone().invert();
