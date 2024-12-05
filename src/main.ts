@@ -5464,7 +5464,8 @@ const sphere = new THREE.Mesh();
 const geometry = new THREE.SphereGeometry(25, 60, 60);
 geometry.scale(-1, 1, 1);
 sphere.geometry = geometry;
-sphere.material = new THREE.MeshBasicMaterial({ side: THREE.FrontSide })
+sphere.renderOrder = 1;
+sphere.material = new THREE.MeshBasicMaterial({ side: THREE.FrontSide });
 const textureLoader = new THREE.TextureLoader();
 
 function setupTour(tour: any) {
@@ -5478,6 +5479,33 @@ function setupTour(tour: any) {
 		sphere.material.needsUpdate = true;
 
 	})
+	tour.hotspots.forEach(hotspot => {
+
+		const circle = new THREE.Mesh(
+			new THREE.CircleGeometry(30, 30),
+			new THREE.MeshBasicMaterial({
+				color: "#ffffff",
+				side: THREE.DoubleSide,
+				depthTest: false,
+			}),
+		);
+		circle.renderOrder = 2
+		circle.geometry.applyMatrix4(
+			new THREE.Matrix4().makeRotationX(0.5 * Math.PI),
+		);
+		const pos = new THREE.Vector3(-hotspot.coords.scene.x, hotspot.coords.scene.y, hotspot.coords.scene.z)
+		pos.multiplyScalar(0.1)
+		circle.position.copy(pos);
+		circle.name = hotspot.image.id;
+
+		const span = document.createElement('span')
+		span.className = 'hotspot'
+		span.innerText = "Master Bedroom Bathroom "
+		circle.userData = { el: span }
+
+		sphere.add(circle);
+
+	});
 
 }
 setupTour(sampleData[0])
@@ -5530,33 +5558,33 @@ function animate() {
 	rayCaster.setFromCamera(mousePosition, camera);
 	intersects = rayCaster.intersectObject(scene, true);
 	// update elelement
-	scene.children.forEach((child: any, _) => {
-		if (child.name === "hotspot") {
-			const vector: any = child.userData.point.clone();
+	sphere.children.forEach((child: any, _) => {
 
-			camera.updateMatrix();
-			camera.updateMatrixWorld();
-			const cameraMatrixInverse = camera.matrixWorld.clone().invert();
+		const vector: any = child.position.clone();
 
-			// biome-ignore lint/style/noVar: <explanation>
-			// biome-ignore lint/correctness/noInnerDeclarations: <explanation>
-			var frustum = new THREE.Frustum();
-			frustum.setFromProjectionMatrix(
-				camera.projectionMatrix.clone().multiply(cameraMatrixInverse),
-			);
-			const isInview = frustum.containsPoint(vector);
-			vector.project(camera);
+		camera.updateMatrix();
+		camera.updateMatrixWorld();
+		const cameraMatrixInverse = camera.matrixWorld.clone().invert();
 
-			vector.x = Math.round((0.5 + vector.x / 2) * window.innerWidth);
+		// biome-ignore lint/style/noVar: <explanation>
+		// biome-ignore lint/correctness/noInnerDeclarations: <explanation>
+		var frustum = new THREE.Frustum();
+		frustum.setFromProjectionMatrix(
+			camera.projectionMatrix.clone().multiply(cameraMatrixInverse),
+		);
+		const isInview = frustum.containsPoint(vector);
+		vector.project(camera);
 
-			vector.y = Math.round((0.5 - vector.y / 2) * window.innerHeight);
+		vector.x = Math.round((0.5 + vector.x / 2) * window.innerWidth);
 
-			const el: HTMLElement = child.userData.el;
+		vector.y = Math.round((0.5 - vector.y / 2) * window.innerHeight);
 
-			el.style.top = `${vector.y - el.clientHeight / 2}px`;
-			el.style.left = `${vector.x - el.clientWidth / 2}px`;
-			el.style.display = !isInview ? "none" : "block";
-		}
+		const el: HTMLElement = child.userData.el;
+
+		el.style.top = `${vector.y - el.clientHeight / 2}px`;
+		el.style.left = `${vector.x - el.clientWidth / 2}px`;
+		el.style.display = !isInview ? "none" : "block";
+
 	});
 }
 animate();
