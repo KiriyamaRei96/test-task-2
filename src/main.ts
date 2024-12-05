@@ -5440,59 +5440,7 @@ const sampleData = [
 let initialRotation = undefined;
 // Debug
 const gui = new GUI();
-const debugObj = {
-	sphereRotation: 0,
-	cameraRotation: 0,
 
-	setNorth: () => {
-		const hotspot = scene.children.find(
-			(item) => item.userData.name === sphere.material?.name,
-		);
-		if (hotspot?.userData.rotation === undefined) {
-			if (initialRotation === undefined) {
-				initialRotation = orbit.getAzimuthalAngle()
-				hotspot.userData = {
-					...hotspot.userData,
-					rotation: 0,
-				};
-				return
-			}
-			hotspot.userData = {
-				...hotspot.userData,
-				rotation: initialRotation + -orbit.getAzimuthalAngle(),
-			};
-			sphere.rotation.y = initialRotation + -orbit.getAzimuthalAngle();
-		} else {
-			const newRotation =
-				hotspot.userData.rotation + initialRotation + -orbit.getAzimuthalAngle();
-			hotspot.userData = {
-				...hotspot.userData,
-				rotation: newRotation,
-			};
-			sphere.rotation.y = newRotation;
-		}
-		orbit.minAzimuthAngle =
-			initialRotation + (orbit.getAzimuthalAngle() - orbit.getAzimuthalAngle());
-		orbit.maxAzimuthAngle =
-			initialRotation + (orbit.getAzimuthalAngle() - orbit.getAzimuthalAngle());
-		orbit.update();
-		orbit.minAzimuthAngle = -Infinity;
-		orbit.maxAzimuthAngle = Infinity;
-	},
-};
-gui.add(debugObj, "sphereRotation", -Math.PI, Math.PI, 0.001).onChange(() => {
-	sphere.rotation.y = debugObj.sphereRotation;
-});
-gui.add(debugObj, "cameraRotation", -Math.PI, Math.PI, 0.001).onChange(() => {
-	orbit.minAzimuthAngle = debugObj.cameraRotation;
-	orbit.maxAzimuthAngle = debugObj.cameraRotation;
-	orbit.update();
-	orbit.minAzimuthAngle = -Infinity;
-	orbit.maxAzimuthAngle = Infinity;
-
-
-});
-gui.add(debugObj, "setNorth");
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
 	75,
@@ -5516,112 +5464,25 @@ const sphere = new THREE.Mesh();
 const geometry = new THREE.SphereGeometry(25, 60, 60);
 geometry.scale(-1, 1, 1);
 sphere.geometry = geometry;
-
+sphere.material = new THREE.MeshBasicMaterial({ side: THREE.FrontSide })
 const textureLoader = new THREE.TextureLoader();
 
-fetch(info)
-	.then((response) => {
-		if (!response.ok) {
-			throw new Error("Network response was not ok");
-		}
-		return response.text(); // Read the response as text
+function setupTour(tour: any) {
+	if (sphere.material.map)
+		sphere.material.map.displose()
+
+	console.log(tour.url);
+	textureLoader.load(tour.url, texture => {
+		texture.colorSpace = THREE.SRGBColorSpace
+		sphere.material.map = texture;
+		sphere.material.needsUpdate = true;
+
 	})
-	.then((text) => {
-		const linesArray = text.split("\n");
-		linesArray.shift();
-		const panoArr = linesArray.map((item) => {
-			const line = item.replace("\r", "");
-			const infoArr = line.split("|");
-			return {
-				img: infoArr[0],
-				position: new THREE.Vector3(
-					Number(infoArr[1].split(",")[0]),
-					-Number(infoArr[1].split(",")[2]),
-					-Number(infoArr[1].split(",")[1]),
-				),
-				quaternion: new THREE.Quaternion(
-					Number(infoArr[2].split(",")[2]),
-					Number(infoArr[2].split(",")[1]),
 
-					Number(infoArr[2].split(",")[3]),
-					Number(infoArr[2].split(",")[0]),
-				),
-				name: infoArr[3].replace("unfurnished,", ""),
-				floor: infoArr[4],
-			};
-		});
-		panoArr.forEach((pano, index) => {
-			const circle = new THREE.Mesh(
-				new THREE.CircleGeometry(0.2, 30),
-				new THREE.MeshBasicMaterial({
-					color: "#ffffff",
-					side: THREE.DoubleSide,
-				}),
-			);
-			circle.geometry.applyMatrix4(
-				new THREE.Matrix4().makeRotationX(0.5 * Math.PI),
-			);
-			circle.position.copy(pano.position);
-			circle.name = "hotspot";
-			scene.add(circle);
-			const span = document.createElement("span");
-
-			span.innerText = pano.img;
-
-			document.body.appendChild(span);
-
-			if (index === 0) {
-				initialRotation = sampleData[0].rotationNorthPoint.h
-
-
-				circle.userData = {
-					texture: textureLoader.load("/static/" + pano.img),
-					point: pano.position.clone(),
-					el: span,
-					name: pano.img,
-					rotation: 0,
-				};
-				return
-			}
-
-			circle.userData = {
-				texture: textureLoader.load("/static/" + pano.img),
-				point: pano.position.clone(),
-				el: span,
-				name: pano.img,
-				rotation: initialRotation + - sampleData[index]?.rotationNorthPoint?.h ?? 0,
-				// quaternion: pano.quaternion.clone(),
-			};
-		});
-		const pos = new THREE.Vector3(
-			panoArr[0].position.x,
-			0,
-			panoArr[0].position.z,
-		);
-		camera.position.copy(pos);
-		sphere.position.copy(pos);
-		// biome-ignore lint/style/useTemplate: <explanation>
-		const texture = textureLoader.load("/static/" + panoArr[0].img);
-		texture.colorSpace = THREE.SRGBColorSpace;
-		sphere.material = new THREE.MeshBasicMaterial({
-			side: THREE.FrontSide,
-			map: texture,
-			name: panoArr[0].img,
-		});
-
-		// let euler = new THREE.Euler();
-		// euler.setFromQuaternion(panoArr[0].quaternion.invert(), "YXZ");
-
-		// sphere.rotation.set(0, euler.y, 0);
-
-		scene.add(sphere);
-	})
-	.catch((error) => {
-		console.error("There has been a problem with your fetch operation:", error);
-	});
-
+}
+setupTour(sampleData[0])
 camera.fov = 75;
-
+scene.add(sphere)
 camera.updateProjectionMatrix();
 let scale = 75;
 function zoom(event: any) {
@@ -5657,41 +5518,8 @@ renderer.domElement.addEventListener("dblclick", () => {
 	const hotspot = intersects.filter((int) => int.object.name === "hotspot")[0]
 		?.object;
 	if (hotspot) {
-		const pos = new THREE.Vector3(
-			hotspot.userData.point.x,
-			0,
-			hotspot.userData.point.z,
-		);
-		camera.position.copy(pos);
-		sphere.position.copy(pos);
-		const target = pos
-			.clone()
-			.add(
-				camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(0.0001),
-			);
 
-		orbit.target.copy(target);
-		// biome-ignore lint/style/useTemplate: <explanation>
-		const texture = hotspot.userData.texture;
-		texture.colorSpace = THREE.SRGBColorSpace;
-		// @ts-ignore
-		sphere.material.dispose();
-		sphere.material = new THREE.MeshBasicMaterial({
-			side: THREE.FrontSide,
-			map: texture,
-			name: hotspot.userData.name,
-		});
 
-		// let euler = new THREE.Euler();
-		// euler.setFromQuaternion(hotspot.userData.quaternion.invert(), "YXZ");
-
-		// sphere.rotation.set(0, euler.y, 0);
-
-		if (hotspot.userData.rotation) {
-			sphere.rotation.set(0, hotspot.userData.rotation, 0);
-		} else {
-			sphere.rotation.set(0, 0, 0);
-		}
 	}
 });
 
