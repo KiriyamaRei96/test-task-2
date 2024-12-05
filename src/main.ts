@@ -5570,11 +5570,26 @@ fetch(info)
 
 			document.body.appendChild(span);
 
+			if (index === 0) {
+				initialRotation = sampleData[0].rotationNorthPoint.h
+
+
+				circle.userData = {
+					texture: textureLoader.load("/static/" + pano.img),
+					point: pano.position.clone(),
+					el: span,
+					name: pano.img,
+					rotation: 0,
+				};
+				return
+			}
+
 			circle.userData = {
 				texture: textureLoader.load("/static/" + pano.img),
 				point: pano.position.clone(),
 				el: span,
 				name: pano.img,
+				rotation: initialRotation + - sampleData[index]?.rotationNorthPoint?.h ?? 0,
 				// quaternion: pano.quaternion.clone(),
 			};
 		});
