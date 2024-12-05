@@ -5475,7 +5475,19 @@ const debugObj = {
 		orbit.maxAzimuthAngle = Infinity;
 	},
 };
+gui.add(debugObj, "sphereRotation", -Math.PI, Math.PI, 0.001).onChange(() => {
+	sphere.rotation.y = debugObj.sphereRotation;
+});
+gui.add(debugObj, "cameraRotation", -Math.PI, Math.PI, 0.001).onChange(() => {
+	orbit.minAzimuthAngle = debugObj.cameraRotation;
+	orbit.maxAzimuthAngle = debugObj.cameraRotation;
+	orbit.update();
+	orbit.minAzimuthAngle = -Infinity;
+	orbit.maxAzimuthAngle = Infinity;
 
+
+});
+gui.add(debugObj, "setNorth");
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
 	75,
@@ -5522,7 +5534,7 @@ function setupTour(tour: any, rotation) {
 		texture.colorSpace = THREE.SRGBColorSpace
 		sphere.material.map = texture;
 		sphere.material.needsUpdate = true;
-		sphere.rotation.y = rotation ?? 0
+		sphere.rotation.y = tour.rotation ?? 0
 		// sphere.rotation.y = -tour.rotationNorthPoint.h
 
 
@@ -5559,7 +5571,7 @@ function setupTour(tour: any, rotation) {
 
 
 }
-setupTour(sampleData[0], 0)
+setupTour(sampleData[0])
 camera.fov = 75;
 scene.add(sphere)
 camera.updateProjectionMatrix();
